@@ -10,6 +10,15 @@ on:
         description: 'Repository URL'
         default: 'https://github.com/rsuntkOrgs/android_kernel_samsung_a05m-6.6.git'
         required: true
+      FETCH_TOOLCHAIN:
+        description: 'Update toolchain cache'
+        type: boolean
+        default: false
+      USE_PRIVATE_REPO:
+        description: 'Use private key'
+        type: boolean
+        default: false
+  
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -34,7 +43,12 @@ jobs:
         key: ${{ runner.os }}-toolchain
 
     - name: Clone Kernel Source
-      run: git clone --depth=1 --single-branch -b ${{ inputs.BRANCH }} ${{ inputs.URL }} kernel_root
+      run: |
+        if [[ "${{ inputs.USE_PRIVATE_REPO }}" == "true" ]]; then
+          ${{ secrets.REPO_CLONE }}
+        else
+          git clone --depth=1 --single-branch -b ${{ inputs.BRANCH }} ${{ inputs.URL }} kernel_root
+        fi
       working-directory: rootdir
 
     - name: Fetch toolchains
@@ -44,7 +58,7 @@ jobs:
         aria2c https://github.com/rsuntkOrgs/android_kernel_samsung_a05m-6.6/releases/download/v1.0/xaa
         aria2c https://github.com/rsuntkOrgs/android_kernel_samsung_a05m-6.6/releases/download/v1.0/xab
         echo "INFO: Appending files and extracting ..."
-        cat xaa xab > toolchains.tar.gz && tar -xf toolchains.tar.gz && rm toolchains.tar.gz xaa xab
+        cat xaa xab > toolchains.tar.gz; tar -xf toolchains.tar.gz; rm toolchains.tar.gz xaa xab
       working-directory: rootdir
 
     - name: Setup ccache
@@ -56,9 +70,7 @@ jobs:
           ${{ runner.os }}-ccache-
 
     - name: Prepare ccache
-      run: |
-        ccache -M 5G
-        ccache -z
+      run: ccache -M 5G; ccache -z
         
     - name: Prepare timezone fix
       run: |
@@ -72,6 +84,7 @@ jobs:
         java-version: 21
 
     - name: Build kernel
+      if: github.event.inputs.FETCH_TOOLCHAIN != 'true'
       id: buildKernel
       run: |
         cd kernel_root
@@ -88,6 +101,7 @@ jobs:
       working-directory: rootdir
 
     - name: List trees
+      if: github.event.inputs.FETCH_TOOLCHAIN != 'true'
       run: |
         cd kernel_root/out/target/product/a05/obj/KLEAF_OBJ/dist/kernel_device_modules-6.6/mgk_64_k66_kernel_aarch64.user/
         ls -la
