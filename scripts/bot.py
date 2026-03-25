@@ -28,7 +28,7 @@ def get_caption():
     msg = MSG_TEMPLATE.format(
         title=TITLE,
         version=VERSION,
-        md5sum=MD5SUM
+        md5sum=MD5SUM,
         run_url=RUN_URL,
     )
     if len(msg) > 1024:
