@@ -105,18 +105,18 @@ jobs:
         path: rootdir/kernel_root/out/target/product/a05/obj/KLEAF_OBJ/dist/kernel_device_modules-6.6/mgk_64_k66_kernel_aarch64.user/drivers/*
         compression-level: 9
 
-      - name: Upload to telegram
-        env:
-          CHAT_ID: ${{ secrets.CHAT_ID }}
-          BOT_TOKEN: ${{ secrets.BOT_TOKEN }}
-          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
-          TITLE: "Galaxy A05 Kernel"
-        run: |
-          if [ ! -z "${{ secrets.BOT_TOKEN }}" ]; then
-            export VERSION=$(cd kernel_root && git rev-list --count HEAD)
-            export MD5SUM="$(md5sum $ZIP | cut -d' ' -f1)"
-            ZIP=$(find $(pwd)/external/*.zip)
-            pip3 install telethon
-            python3 scripts/bot.py $ZIP
-          fi
+    - name: Upload to telegram
+      env:
+        CHAT_ID: ${{ secrets.CHAT_ID }}
+        BOT_TOKEN: ${{ secrets.BOT_TOKEN }}
+        RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        TITLE: "Galaxy A05 Kernel"
+      run: |
+        if [ ! -z "${{ secrets.BOT_TOKEN }}" ]; then
+          export VERSION=$(cd kernel_root && git rev-list --count HEAD)
+          ZIP=$(find $(pwd)/external -type f -name *.zip)
+          export MD5SUM="$(md5sum $ZIP | cut -d' ' -f1)"
+          pip3 install telethon
+          python3 scripts/bot.py $ZIP
+        fi
       working-directory: rootdir
