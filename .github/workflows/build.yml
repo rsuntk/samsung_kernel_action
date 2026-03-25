@@ -64,14 +64,18 @@ jobs:
       id: buildKernel
       run: |
         cd kernel_root
-        BUILD_IMG="$(pwd)/out/target/product/a05/obj/KLEAF_OBJ/dist/kernel_device_modules-6.6/mgk_64_k66_kernel_aarch64.user/Image.gz"
-        kernelVersion=$(cd kernel-6.6 && make kernelversion && cd ..)
-        [ -f $(pwd)/build_kernel.sh ] && bash build_kernel.sh || exit 1
-        [ ! -f $BUILD_IMG ] && exit 1
-        gitsha1=$(git rev-parse --short HEAD)
-        buildDetails="`echo $kernelVersion`-A055F_`echo $gitsha1`-`date +'%Y%m%d%H%M%S'`"
-        mv $BUILD_IMG ../rootdir/external/anykernel3; cd ../external/anykernel3; zip -r9 ../AnyKernel3-$(echo $buildDetails).zip *
-        echo "buildDetails=$buildDetails" >> $GITHUB_OUTPUT
+        IMAGE_FILE="out/target/product/a05/obj/KLEAF_OBJ/dist/kernel_device_modules-6.6/mgk_64_k66_kernel_aarch64.user/Image.gz"
+        bash build_kernel.sh
+
+        if [ ! -f "$IMAGE_FILE" ]; then
+          echo "::error::Kernel Image.gz not found!"
+          exit 1
+        fi
+
+        GIT_SHA=$(git rev-parse --short HEAD)
+        BUILD_TIME=$(date +'%Y%m%d%H%M')
+        DETAILS="A055F-${GIT_SHA}-${BUILD_TIME}"
+        echo "buildDetails=$DETAILS" >> $GITHUB_OUTPUT
       working-directory: rootdir
 
     - name: List trees
