@@ -10,10 +10,6 @@ on:
         description: 'Repository URL'
         default: 'https://github.com/rsuntkOrgs/android_kernel_samsung_a05m-6.6.git'
         required: true
-      FETCH_TOOLCHAIN:
-        description: 'Update toolchain cache'
-        type: boolean
-        default: false
       USE_PRIVATE_REPO:
         description: 'Use private key'
         type: boolean
@@ -53,21 +49,10 @@ jobs:
         cat xaa xab > toolchains.tar.gz; tar -xf toolchains.tar.gz; rm toolchains.tar.gz xaa xab
       working-directory: rootdir
 
-    - name: Setup ccache
-      uses: actions/cache@v4
-      with:
-        path: ~/.cache/ccache
-        key: ${{ runner.os }}-ccache-${{ github.sha }}
-        restore-keys: |
-          ${{ runner.os }}-ccache-
-
-    - name: Prepare ccache
-      run: ccache -M 5G; ccache -z
-        
     - name: Prepare timezone fix
       run: |
         sudo rm /etc/localtime
-        sudo ln -s /usr/share/zoneinfo/Asia/Manila /etc/localtime
+        sudo ln -s /usr/share/zoneinfo/Asia/Jakarta /etc/localtime
 
     - name: Setup Java
       uses: actions/setup-java@v5
@@ -76,24 +61,20 @@ jobs:
         java-version: 21
 
     - name: Build kernel
-      if: github.event.inputs.FETCH_TOOLCHAIN != 'true'
       id: buildKernel
       run: |
         cd kernel_root
-        export USE_CCACHE=1
-        export CCACHE_DIR=~/.cache/ccache
-        
+        BUILD_IMG="$(pwd)/out/target/product/a05/obj/KLEAF_OBJ/dist/kernel_device_modules-6.6/mgk_64_k66_kernel_aarch64.user/Image.gz"
         kernelVersion=$(cd kernel-6.6 && make kernelversion && cd ..)
         [ -f $(pwd)/build_kernel.sh ] && bash build_kernel.sh || exit 1
-        [ ! -f $(pwd)/out/target/product/a05/obj/KLEAF_OBJ/dist/kernel_device_modules-6.6/mgk_64_k66_kernel_aarch64.user/Image.gz ] && exit 1
+        [ ! -f $BUILD_IMG ] && exit 1
         gitsha1=$(git rev-parse --short HEAD)
         buildDetails="`echo $kernelVersion`-A055F_`echo $gitsha1`-`date +'%Y%m%d%H%M%S'`"
+        mv $BUILD_IMG ../rootdir/external/anykernel3; cd ../external/anykernel3; zip -r9 ../AnyKernel3-$(echo $buildDetails).zip *
         echo "buildDetails=$buildDetails" >> $GITHUB_OUTPUT
-        ccache -s
       working-directory: rootdir
 
     - name: List trees
-      if: github.event.inputs.FETCH_TOOLCHAIN != 'true'
       run: |
         cd kernel_root/out/target/product/a05/obj/KLEAF_OBJ/dist/kernel_device_modules-6.6/mgk_64_k66_kernel_aarch64.user/
         ls -la
@@ -123,3 +104,19 @@ jobs:
         name: LKM-${{ steps.buildKernel.outputs.buildDetails }}
         path: rootdir/kernel_root/out/target/product/a05/obj/KLEAF_OBJ/dist/kernel_device_modules-6.6/mgk_64_k66_kernel_aarch64.user/drivers/*
         compression-level: 9
+
+      - name: Upload to telegram
+        env:
+          CHAT_ID: ${{ secrets.CHAT_ID }}
+          BOT_TOKEN: ${{ secrets.BOT_TOKEN }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          TITLE: "Galaxy A05 Kernel"
+        run: |
+          if [ ! -z "${{ secrets.BOT_TOKEN }}" ]; then
+            export VERSION=$(cd kernel_root && git rev-list --count HEAD)
+            export MD5SUM="$(md5sum $ZIP | cut -d' ' -f1)"
+            ZIP=$(find $(pwd)/external/*.zip)
+            pip3 install telethon
+            python3 scripts/bot.py $ZIP
+          fi
+      working-directory: rootdir
