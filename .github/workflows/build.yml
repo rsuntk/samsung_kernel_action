@@ -64,7 +64,7 @@ jobs:
       id: buildKernel
       run: |
         cd kernel_root
-        IMAGE_FILE="out/target/product/a05/obj/KLEAF_OBJ/dist/kernel_device_modules-6.6/mgk_64_k66_kernel_aarch64.user/Image.gz"
+        IMAGE_FILE="out/target/product/a05m/obj/KLEAF_OBJ/dist/kernel_device_modules-6.6/mgk_64_k66_kernel_aarch64.user/Image.gz"
         bash build_kernel.sh
 
         if [ ! -f "$IMAGE_FILE" ]; then
@@ -80,7 +80,7 @@ jobs:
 
     - name: List trees
       run: |
-        cd kernel_root/out/target/product/a05/obj/KLEAF_OBJ/dist/kernel_device_modules-6.6/mgk_64_k66_kernel_aarch64.user/
+        cd kernel_root/out/target/product/a05m/obj/KLEAF_OBJ/dist/kernel_device_modules-6.6/mgk_64_k66_kernel_aarch64.user/
         ls -la
         find . -type f -name "Image.gz" || echo "Image.gz not found!"
       working-directory: rootdir
@@ -98,7 +98,7 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: Image_GZ-${{ steps.buildKernel.outputs.buildDetails }}
-        path: rootdir/kernel_root/out/target/product/a05/obj/KLEAF_OBJ/dist/kernel_device_modules-6.6/mgk_64_k66_kernel_aarch64.user/Image.gz
+        path: rootdir/kernel_root/out/target/product/a05m/obj/KLEAF_OBJ/dist/kernel_device_modules-6.6/mgk_64_k66_kernel_aarch64.user/Image.gz
         compression-level: 9
 
     - name: Upload LKM
@@ -106,7 +106,7 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: LKM-${{ steps.buildKernel.outputs.buildDetails }}
-        path: rootdir/kernel_root/out/target/product/a05/obj/KLEAF_OBJ/dist/kernel_device_modules-6.6/mgk_64_k66_kernel_aarch64.user/drivers/*
+        path: rootdir/kernel_root/out/target/product/a05m/obj/KLEAF_OBJ/dist/kernel_device_modules-6.6/mgk_64_k66_kernel_aarch64.user/drivers/*
         compression-level: 9
 
     - name: Upload to telegram
