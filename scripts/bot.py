@@ -23,7 +23,6 @@ MSG_TEMPLATE = """
 [Workflow run]({run_url})
 """.strip()
 
-
 def get_caption():
     msg = MSG_TEMPLATE.format(
         title=TITLE,
@@ -34,7 +33,6 @@ def get_caption():
     if len(msg) > 1024:
         msg = RUN_URL
     return msg
-
 
 def check_environ():
     global CHAT_ID, MESSAGE_THREAD_ID
@@ -67,7 +65,6 @@ def check_environ():
         except ValueError:
             print("[-] Invalid MESSAGE_THREAD_ID format, ignoring")
             MESSAGE_THREAD_ID = None
-
 
 async def main():
     print("[+] Uploading to telegram")
@@ -104,7 +101,6 @@ async def main():
             parse_mode="markdown",
         )
         print("[+] Done!")
-
 
 if __name__ == "__main__":
     try:
