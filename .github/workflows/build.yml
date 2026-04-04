@@ -1,0 +1,121 @@
+name: Build Kernel
+on:
+  workflow_dispatch:
+    inputs:
+      REPO:
+        description: 'Kernel repository'
+        default: 'samsungexynos850/android_kernel_samsung_exynos850'
+        required: true
+      BRANCH:
+        description: 'Kernel branch'
+        default: 'lineage-23.2'
+        required: true
+      KSU:
+        description: 'Add KernelSU support'
+        type: boolean
+        default: false
+      KSU_BRANCH:
+        description: 'KernelSU branch'
+        required: true
+        default: 'main'
+      UPDATE_TOOLCHAIN:
+        description: 'Update toolchain cache'
+        type: boolean
+        default: false
+      KCFLAGS_W:
+        description: 'Enable KCFLAGS=-w'
+        type: boolean
+        default: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Set Timezone
+      run: sudo ln -sf /usr/share/zoneinfo/Asia/Jakarta /etc/localtime
+
+    - uses: actions/checkout@v5
+      with:
+        fetch-depth: 1
+
+    - name: Clone kernel source
+      if: github.event.inputs.UPDATE_TOOLCHAIN != 'true'
+      run: git clone --depth=1 --single-branch -b ${{ github.event.inputs.BRANCH }} https://github.com/${{ github.event.inputs.REPO }} kernel_root
+
+    - name: Cache Toolchain
+      id: cache-toolchain
+      uses: actions/cache@v5
+      with:
+        path: ~/clang-22
+        key: llvm-22-aosp
+
+    - name: Cache ccache
+      uses: actions/cache@v5
+      with:
+        path: ~/.ccache
+        key: ccache-kernel-${{ github.sha }}
+        restore-keys: ccache-kernel-
+
+    - name: Prepare Dependencies
+      run: chmod +x ./build.sh && bash ./build.sh --setup-deps
+
+    - name: Setup Build Environment
+      if: github.event.inputs.UPDATE_TOOLCHAIN != 'true'
+      id: buildKernel
+      run: |
+        cd kernel_root
+        gitsha1=$(git rev-parse --short HEAD)
+        CODENAME=$(cat ../codename)
+        echo "buildDetails=$CODENAME-${{ github.event.inputs.DEVICE_TARGET }}-$(date +%Y%m%d)_$(echo $gitsha1)-NIGHTLY" >> $GITHUB_OUTPUT
+        echo "currDate=$(date)" >> $GITHUB_OUTPUT
+
+    - name: Fetch Toolchains
+      if: ${{ steps.cache-toolchain.outputs.cache-hit != 'true' || github.event.inputs.UPDATE_TOOLCHAIN == 'true' }}
+      env:
+        UPDATE_TOOLCHAINS: ${{ github.event.inputs.UPDATE_TOOLCHAIN }}
+      run: bash ./build.sh --fetch-toolchains
+
+    - name: Send Telegram notifier
+      if: github.event.inputs.UPDATE_TOOLCHAIN != 'true'
+      continue-on-error: true
+      uses: appleboy/telegram-action@master
+      with:
+          to: ${{ secrets.TG_CHAT_ID }}
+          token: ${{ secrets.TG_TOKEN }}
+          message: |
+            Build started!
+            RELEASE: ${{ github.event.inputs.BUILD_RELEASE }}
+
+            Repository: ${{ github.event.inputs.REPO }}
+            Branch: ${{ github.event.inputs.BRANCH }}
+            Device: ${{ github.event.inputs.DEVICE_TARGET }}
+            Date: ${{ steps.buildKernel.outputs.currDate }}
+            KernelSU: ${{ github.event.inputs.KSU }}
+            Workaround: ${{ github.event.inputs.APPLY_WORKAROUND }}
+
+    - name: Build Kernel
+      if: github.event.inputs.UPDATE_TOOLCHAIN != 'true'
+      env:
+        TG_TOKEN: ${{ secrets.TG_TOKEN }}
+        TG_CHAT_ID: ${{ secrets.TG_CHAT_ID }}
+        KSU: ${{ github.event.inputs.KSU }}
+        CI_ZIPNAME: "${{ steps.buildKernel.outputs.buildDetails }}.zip"
+        KCFLAGS_W: "${{ github.event.inputs.KCFLAGS_W }}"
+      run: |
+        cd kernel_root
+        if [ ! -d ~/.ccache ]; then
+          mkdir -p ~/.ccache
+        fi
+        # Handle KernelSU
+        if [[ "$KSU" == "true" ]]; then
+          curl -LSs "https://raw.githubusercontent.com/rsuntk/KernelSU/main/kernel/setup.sh" | bash -s ${{ inputs.KSU_BRANCH }}
+        fi
+        bash ../build.sh
+
+    - name: Upload kernel artifacts
+      uses: actions/upload-artifact@v5
+      with:
+        name: Kernel-${{ steps.buildKernel.outputs.buildDetails }}
+        path: |
+          kernel_root/out/arch/arm64/boot/Image.gz
+          kernel_root/out/.config
