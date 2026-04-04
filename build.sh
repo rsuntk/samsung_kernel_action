@@ -150,10 +150,10 @@ send_telegram "$COMP_LOG" "$(md5sum $COMP_LOG | cut -d' ' -f1)" "$SECONDS"
 # --- Packaging & Upload ---
 if [ -f "$OUT_DIR/arch/arm64/boot/Image" ]; then
     msg "Kernel compiled successfully! Packaging..."
-    cp "$OUT_DIR/arch/arm64/boot/Image" external/AnyKernel3/
+    cp "$OUT_DIR/arch/arm64/boot/Image" external/anykernel3/
 
-    cd external/AnyKernel3
-    zip -r9 "../../$ZIPNAME" * -x '.git*' README.md '*placeholder'
+    cd external/anykernel3
+    zip -r9 "../../$ZIPNAME" *
     cd ../..
 
     MD5_CHECK=$(md5sum "$ZIPNAME" | cut -d' ' -f1)
