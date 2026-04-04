@@ -69,7 +69,7 @@ jobs:
         fi
 
         # Copy Image.gz file
-        cd ..; cp $IMAGE_FILE ./external/anykernel3; cd ./external/anykernel3; zip -r9 ../$(echo $DETAILS).zip *; cd -
+        cp $IMAGE_FILE ../external/anykernel3; cd ..; cd ./external/anykernel3; zip -r9 ../$(echo $DETAILS).zip *; cd -
         echo "buildDetails=$DETAILS" >> $GITHUB_OUTPUT
       working-directory: rootdir
 
