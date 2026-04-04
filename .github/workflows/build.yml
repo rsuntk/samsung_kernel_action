@@ -8,12 +8,8 @@ on:
         required: true
       URL:
         description: 'Repository URL'
-        default: 'https://github.com/rsuntkOrgs/android_kernel_samsung_a05m-6.6.git'
+        default: 'https://github.com/rsuntk/android_kernel_samsung_a05m-rootdir.git'
         required: true
-      USE_PRIVATE_REPO:
-        description: 'Use private key'
-        type: boolean
-        default: false
   
 jobs:
   build:
@@ -32,12 +28,7 @@ jobs:
         sudo aptitude install libssl-dev -y
 
     - name: Clone Kernel Source
-      run: |
-        if [[ "${{ inputs.USE_PRIVATE_REPO }}" == "true" ]]; then
-          ${{ secrets.REPO_CLONE }}
-        else
-          git clone --depth=1 --single-branch -b ${{ inputs.BRANCH }} ${{ inputs.URL }} kernel_root
-        fi
+      run: git clone --depth 1 --recurse-submodules --shallow-submodules --single-branch -b ${{ inputs.BRANCH }} ${{ inputs.URL }} kernel_root
       working-directory: rootdir
 
     - name: Fetch toolchains
@@ -65,6 +56,11 @@ jobs:
       run: |
         cd kernel_root
         IMAGE_FILE="out/target/product/a05m/obj/KLEAF_OBJ/dist/kernel_device_modules-6.6/mgk_64_k66_kernel_aarch64.user/Image.gz"
+        GIT_SHA=$(git rev-parse --short HEAD)
+        DETAILS="A055F-${GIT_SHA}-${BUILD_TIME}"
+        BUILD_TIME=$(date +'%Y%m%d%H%M')
+
+        # Start building
         bash build_kernel.sh
 
         if [ ! -f "$IMAGE_FILE" ]; then
@@ -72,9 +68,8 @@ jobs:
           exit 1
         fi
 
-        GIT_SHA=$(git rev-parse --short HEAD)
-        BUILD_TIME=$(date +'%Y%m%d%H%M')
-        DETAILS="A055F-${GIT_SHA}-${BUILD_TIME}"
+        # Copy Image.gz file
+        cd ..; cp $IMAGE_FILE ./external/anykernel3; cd ./external/anykernel3; zip -r9 ../$(echo $DETAILS).zip *; cd -
         echo "buildDetails=$DETAILS" >> $GITHUB_OUTPUT
       working-directory: rootdir
 
