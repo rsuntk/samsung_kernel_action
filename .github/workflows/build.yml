@@ -10,6 +10,10 @@ on:
         description: 'Kernel branch'
         default: 'lineage-23.2'
         required: true
+      DEVICE_TARGET:
+        description: 'Target device to build'
+        default: 'a21snsxx'
+        required: true
       KSU:
         description: 'Add KernelSU support'
         type: boolean
@@ -84,14 +88,12 @@ jobs:
           token: ${{ secrets.TG_TOKEN }}
           message: |
             Build started!
-            RELEASE: ${{ github.event.inputs.BUILD_RELEASE }}
 
             Repository: ${{ github.event.inputs.REPO }}
             Branch: ${{ github.event.inputs.BRANCH }}
             Device: ${{ github.event.inputs.DEVICE_TARGET }}
             Date: ${{ steps.buildKernel.outputs.currDate }}
             KernelSU: ${{ github.event.inputs.KSU }}
-            Workaround: ${{ github.event.inputs.APPLY_WORKAROUND }}
 
     - name: Build Kernel
       if: github.event.inputs.UPDATE_TOOLCHAIN != 'true'
