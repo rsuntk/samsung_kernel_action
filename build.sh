@@ -37,19 +37,18 @@ send_telegram() {
         return
     fi
 
-    local msg_bar="<b>Device: ${DEVICE_TARGET}</b>
-<b>MD5: ${md5}</b>
+    local msg_bar="Device: ${DEVICE_TARGET}
+MD5: ${md5}
 
 Build done in ${time} minutes"
 
     msg "Uploading to Telegram..."
-    curl -s -F document=@"$file" "https://api.telegram.org/bot$TG_TOKEN/sendDocument" \
+    curl -s -F document=@$file "https://api.telegram.org/bot$TG_TOKEN/sendDocument" \
         -F chat_id="$TG_CHAT_ID" \
         -F "disable_web_page_preview=true" \
-        -F "parse_mode=html" \
+        -F "parse_mode=markdownv2" \
         -F caption="$msg_bar"
     msg "Upload completed!"
-
 }
 
 # --- Dependencies Setup ---
