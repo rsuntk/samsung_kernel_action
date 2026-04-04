@@ -84,8 +84,8 @@ jobs:
       continue-on-error: true
       uses: appleboy/telegram-action@master
       with:
-          to: ${{ secrets.TG_CHAT_ID }}
-          token: ${{ secrets.TG_TOKEN }}
+          to: ${{ secrets.CHAT_ID }}
+          token: ${{ secrets.BOT_TOKEN }}
           message: |
             Build started!
 
@@ -98,8 +98,8 @@ jobs:
     - name: Build Kernel
       if: github.event.inputs.UPDATE_TOOLCHAIN != 'true'
       env:
-        TG_TOKEN: ${{ secrets.TG_TOKEN }}
-        TG_CHAT_ID: ${{ secrets.TG_CHAT_ID }}
+        TG_TOKEN: ${{ secrets.BOT_TOKEN }}
+        TG_CHAT_ID: ${{ secrets.CHAT_ID }}
         DEVICE_TARGET: ${{ github.event.inputs.DEVICE_TARGET }}
         KSU: ${{ github.event.inputs.KSU }}
         CI_ZIPNAME: "${{ steps.buildKernel.outputs.buildDetails }}.zip"
