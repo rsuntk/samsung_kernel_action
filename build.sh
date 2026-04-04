@@ -146,24 +146,31 @@ make $BUILD_FLAGS $DEFCONFIG
 make $BUILD_FLAGS | tee -a $COMP_LOG
 send_telegram "$COMP_LOG" "$(md5sum $COMP_LOG | cut -d' ' -f1)" "$SECONDS"
 
-# --- Packaging & Upload ---
+ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+ANYKERNEL_DIR="$ROOT_DIR/external/anykernel3"
+
 if [ -f "$OUT_DIR/arch/arm64/boot/Image" ]; then
     msg "Kernel compiled successfully! Packaging..."
-    cp "$OUT_DIR/arch/arm64/boot/Image" external/anykernel3/
 
-    cd external/anykernel3
-    zip -r9 "../../$ZIPNAME" *
-    cd ../..
+    if [ ! -d "$ANYKERNEL_DIR" ]; then
+        error "AnyKernel3 directory not found at: $ANYKERNEL_DIR"
+    fi
 
-    MD5_CHECK=$(md5sum "$ZIPNAME" | cut -d' ' -f1)
+    rm -f "$ANYKERNEL_DIR/Image"*
+    cp "$OUT_DIR/arch/arm64/boot/Image" "$ANYKERNEL_DIR/"
 
-    # Trigger Telegram Upload
-    send_telegram "$(pwd)/$ZIPNAME" "$MD5_CHECK" "$SECONDS"
+    pushd "$ANYKERNEL_DIR" >/dev/null
+    zip -r9 "$ROOT_DIR/$ZIPNAME" ./*
+    popd >/dev/null
 
-    [ "$DO_CLEAN" = "true" ] && rm -rf "$OUT_DIR/arch/arm64/boot"
+    MD5_CHECK=$(md5sum "$ROOT_DIR/$ZIPNAME" | cut -d' ' -f1)
+
+    send_telegram "$ROOT_DIR/$ZIPNAME" "$MD5_CHECK" "$SECONDS"
+
+    [ "$DO_CLEAN" = "true" ] && rm -rf "$OUT_DIR"
 
     echo -e "\n${green}Build completed in $((SECONDS / 60)) minute(s)!${reset}"
-    msg "Output Zip: $ZIPNAME (md5: $MD5_CHECK)"
+    msg "Output Zip: $ZIPNAME (at $ROOT_DIR)"
 else
-    error "Compilation failed!"
+    error "Compilation failed! Image file not found."
 fi
