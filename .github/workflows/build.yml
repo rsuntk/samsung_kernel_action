@@ -55,22 +55,28 @@ jobs:
       id: buildKernel
       run: |
         cd kernel_root
-        IMAGE_FILE="out/target/product/a05m/obj/KLEAF_OBJ/dist/kernel_device_modules-6.6/mgk_64_k66_kernel_aarch64.user/Image.gz"
+        BUILD_TIME=$(date +'%Y%m%d%H%M')
         GIT_SHA=$(git rev-parse --short HEAD)
         DETAILS="A055F-${GIT_SHA}-${BUILD_TIME}"
-        BUILD_TIME=$(date +'%Y%m%d%H%M')
-
+        
         # Start building
         bash build_kernel.sh
 
+        IMAGE_FILE="out/target/product/a05m/obj/KLEAF_OBJ/dist/kernel_device_modules-6.6/mgk_64_k66_kernel_aarch64.user/Image.gz"
+        
         if [ ! -f "$IMAGE_FILE" ]; then
           echo "::error::Kernel Image.gz not found!"
           exit 1
         fi
 
-        # Copy Image.gz file
-        cp $IMAGE_FILE ../external/anykernel3; cd ..; cd ./external/anykernel3; zip -r9 ../$(echo $DETAILS).zip *; cd -
-        echo "buildDetails=$DETAILS" >> $GITHUB_OUTPUT
+        cp "$IMAGE_FILE" ../external/anykernel3/
+        
+        pushd ../external/anykernel3
+        zip -r9 "../../${DETAILS}.zip" *
+        popd
+
+        echo "buildDetails=${DETAILS}" >> $GITHUB_OUTPUT
+        echo "zipPath=$(pwd)/../${DETAILS}.zip" >> $GITHUB_OUTPUT
       working-directory: rootdir
 
     - name: List trees
@@ -113,7 +119,7 @@ jobs:
       run: |
         if [ ! -z "${{ secrets.BOT_TOKEN }}" ]; then
           export VERSION=$(cd kernel_root && git rev-list --count HEAD)
-          ZIP=$(find $(pwd)/external -type f -name *.zip)
+          ZIP=${{ steps.buildKernel.outputs.zipPath }}
           export MD5SUM="$(md5sum $ZIP | cut -d' ' -f1)"
           pip3 install telethon
           python3 scripts/bot.py $ZIP
