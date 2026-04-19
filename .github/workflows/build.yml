@@ -2,13 +2,21 @@ name: Build Kernel
 on:
   workflow_dispatch:
     inputs:
-      BRANCH:
-        description: 'Branch to build'
+      ROOTDIR_BRANCH:
+        description: 'Bazel Rootdir Branch to build'
         default: 'master'
         required: true
-      URL:
-        description: 'Repository URL'
+      ROOTDIR_URL:
+        description: 'Bazel Rootdir Repository URL'
         default: 'https://github.com/rsuntk/android_kernel_samsung_a05m-rootdir.git'
+        required: true
+      KERNEL_BRANCH:
+        description: 'Common kernel branch'
+        default: 'android15-6.6'
+        required: true
+      KERNEL_URL:
+        description: 'Common kernel repository URL'
+        default: 'https://github.com/rsuntk/android_kernel_samsung_a05m-6.6.git'
         required: true
   
 jobs:
@@ -28,7 +36,11 @@ jobs:
         sudo aptitude install libssl-dev -y
 
     - name: Clone Kernel Source
-      run: git clone --depth 1 --recurse-submodules --shallow-submodules --single-branch -b ${{ inputs.BRANCH }} ${{ inputs.URL }} kernel_root
+      run: |
+        git clone --depth=1 --single-branch -b ${{ inputs.ROOTDIR_BRANCH }} ${{ inputs.ROOTDIR_URL }} kernel_root
+        cd kernel_root
+        git clone --depth=1 --single-branch -b ${{ inputs.ROOTDIR_BRANCH }} ${{ inputs.KERNEL_URL }} kernel-6.6
+        cd -
       working-directory: rootdir
 
     - name: Fetch toolchains
