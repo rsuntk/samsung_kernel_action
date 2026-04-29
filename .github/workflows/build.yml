@@ -2,14 +2,6 @@ name: Build Kernel
 on:
   workflow_dispatch:
     inputs:
-      ROOTDIR_BRANCH:
-        description: 'Bazel Rootdir Branch to build'
-        default: 'master'
-        required: true
-      ROOTDIR_URL:
-        description: 'Bazel Rootdir Repository URL'
-        default: 'https://github.com/rsuntk/android_kernel_samsung_a05m-rootdir.git'
-        required: true
       KERNEL_BRANCH:
         description: 'Common kernel branch'
         default: 'android15-6.6'
@@ -37,35 +29,20 @@ jobs:
 
     - name: Clone Kernel Source
       run: |
-        git clone -q --depth=1 --single-branch -b ${{ inputs.ROOTDIR_BRANCH }} ${{ inputs.ROOTDIR_URL }} kernel_root
-        echo "[+] Cloning bazel rootdir"
-        cd kernel_root
-        echo "[+] cd kernel_root"
-        git clone -q --depth=1 --single-branch -b ${{ inputs.KERNEL_BRANCH }} ${{ inputs.KERNEL_URL }} kernel-6.6
         echo "[+] Cloning common kernel tree"
+        git clone -q --depth=1 --single-branch -b ${{ inputs.KERNEL_BRANCH }} ${{ inputs.KERNEL_URL }} kernel_root
         cd -
         echo "[-] Done."
       working-directory: rootdir
 
+    # TODO: Use action caching
     - name: Fetch toolchains
-      run: |
-        cd kernel_root
-        aria2c https://github.com/rsuntkOrgs/android_kernel_samsung_a05m-6.6/releases/download/v1.0/xaa
-        aria2c https://github.com/rsuntkOrgs/android_kernel_samsung_a05m-6.6/releases/download/v1.0/xab
-        echo "INFO: Appending files and extracting ..."
-        cat xaa xab > toolchains.tar.gz; tar -xf toolchains.tar.gz; rm toolchains.tar.gz xaa xab
-      working-directory: rootdir
+      run: wget -q https://android.googlesource.com/platform/prebuilts/clang/host/linux-x86/+archive/refs/tags/android-14.0.0_r33/clang-r510928.tar.gz -O ~/clang.tar.gz; mkdir -p ~/clang; tar -xf ~/clang.tar.gz -C ~/clang
 
     - name: Prepare timezone fix
       run: |
         sudo rm /etc/localtime
         sudo ln -s /usr/share/zoneinfo/Asia/Jakarta /etc/localtime
-
-    - name: Setup Java
-      uses: actions/setup-java@v5
-      with:
-        distribution: temurin
-        java-version: 21
 
     - name: Build kernel
       id: buildKernel
@@ -76,9 +53,15 @@ jobs:
         DETAILS="A055F-${GIT_SHA}-${BUILD_TIME}"
         
         # Start building
-        bash build_kernel.sh
+        export PATH=$HOME/clang/bin:$PATH
+        export LLVM=1
+        export LLVM_IAS=1
+        export ARCH=arm64
 
-        IMAGE_FILE="out/target/product/a05m/obj/KLEAF_OBJ/dist/kernel_device_modules-6.6/mgk_64_k66_kernel_aarch64.user/Image.gz"
+        make -C $(pwd) O=out a05m_defconfig -j$(nproc --all)
+        make -C $(pwd) O=out -j$(nproc --all)
+
+        IMAGE_FILE="out/arch/arm64/boot/Image.gz"
         
         if [ ! -f "$IMAGE_FILE" ]; then
           echo "::error::Kernel Image.gz not found!"
@@ -95,13 +78,6 @@ jobs:
         echo "zipPath=$(pwd)/../${DETAILS}.zip" >> $GITHUB_OUTPUT
       working-directory: rootdir
 
-    - name: List trees
-      run: |
-        cd kernel_root/out/target/product/a05m/obj/KLEAF_OBJ/dist/kernel_device_modules-6.6/mgk_64_k66_kernel_aarch64.user/
-        ls -la
-        find . -type f -name "Image.gz" || echo "Image.gz not found!"
-      working-directory: rootdir
-
     - name: Upload AnyKernel3
       continue-on-error: true
       uses: actions/upload-artifact@v7
@@ -115,29 +91,21 @@ jobs:
       uses: actions/upload-artifact@v7
       with:
         name: Image_GZ-${{ steps.buildKernel.outputs.buildDetails }}
-        path: rootdir/kernel_root/out/target/product/a05m/obj/KLEAF_OBJ/dist/kernel_device_modules-6.6/mgk_64_k66_kernel_aarch64.user/Image.gz
+        path: rootdir/kernel_root/out/arch/arm64/boot/Image.gz
         compression-level: 9
 
-    - name: Upload LKM
-      continue-on-error: true
-      uses: actions/upload-artifact@v7
-      with:
-        name: LKM-${{ steps.buildKernel.outputs.buildDetails }}
-        path: rootdir/kernel_root/out/target/product/a05m/obj/KLEAF_OBJ/dist/kernel_device_modules-6.6/mgk_64_k66_kernel_aarch64.user/drivers/*
-        compression-level: 9
-
-    - name: Upload to telegram
-      env:
-        CHAT_ID: ${{ secrets.CHAT_ID }}
-        BOT_TOKEN: ${{ secrets.BOT_TOKEN }}
-        RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
-        TITLE: "Galaxy A05 Kernel"
-      run: |
-        if [ ! -z "${{ secrets.BOT_TOKEN }}" ]; then
-          export VERSION=$(cd kernel_root && git rev-list --count HEAD)
-          ZIP=${{ steps.buildKernel.outputs.zipPath }}
-          export MD5SUM="$(md5sum $ZIP | cut -d' ' -f1)"
-          pip3 install telethon
-          python3 scripts/bot.py $ZIP
-        fi
-      working-directory: rootdir
+#    - name: Upload to telegram
+#      env:
+#        CHAT_ID: ${{ secrets.CHAT_ID }}
+#        BOT_TOKEN: ${{ secrets.BOT_TOKEN }}
+#        RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+#        TITLE: "Galaxy A05 Kernel"
+#      run: |
+#        if [ ! -z "${{ secrets.BOT_TOKEN }}" ]; then
+#          export VERSION=$(cd kernel_root && git rev-list --count HEAD)
+#          ZIP=${{ steps.buildKernel.outputs.zipPath }}
+#          export MD5SUM="$(md5sum $ZIP | cut -d' ' -f1)"
+#          pip3 install telethon
+#          python3 scripts/bot.py $ZIP
+#        fi
+#      working-directory: rootdir
