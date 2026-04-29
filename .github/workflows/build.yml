@@ -29,9 +29,7 @@ jobs:
 
     - name: Clone Kernel Source
       run: |
-        echo "[+] Cloning common kernel tree"
-        git clone -q --depth=1 --single-branch -b ${{ inputs.KERNEL_BRANCH }} ${{ inputs.KERNEL_URL }} kernel_root
-        cd -
+        git clone --depth=1 --single-branch -b ${{ inputs.KERNEL_BRANCH }} ${{ inputs.KERNEL_URL }} kernel_root
         echo "[-] Done."
       working-directory: rootdir
 
