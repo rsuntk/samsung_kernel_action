@@ -56,6 +56,9 @@ jobs:
         export LLVM_IAS=1
         export ARCH=arm64
 
+        export KBUILD_BUILD_USER="rsuntk"
+        export KBUILD_BUILD_HOST="yukiprjkt"
+
         make -C $(pwd) O=out a05m_defconfig -j$(nproc --all)
         make -C $(pwd) O=out -j$(nproc --all)
 
