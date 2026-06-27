@@ -4,19 +4,11 @@ on:
     inputs:
       ROOTDIR_BRANCH:
         description: 'Bazel Rootdir Branch to build'
-        default: 'master'
+        default: 'master-G'
         required: true
       ROOTDIR_URL:
         description: 'Bazel Rootdir Repository URL'
         default: 'https://github.com/rsuntk/android_kernel_samsung_a05m-rootdir.git'
-        required: true
-      KERNEL_BRANCH:
-        description: 'Common kernel branch'
-        default: 'android15-6.6'
-        required: true
-      KERNEL_URL:
-        description: 'Common kernel repository URL'
-        default: 'https://github.com/rsuntk/android_kernel_samsung_a05m-6.6.git'
         required: true
   
 jobs:
@@ -37,23 +29,12 @@ jobs:
 
     - name: Clone Kernel Source
       run: |
-        git clone -q --depth=1 --single-branch -b ${{ inputs.ROOTDIR_BRANCH }} ${{ inputs.ROOTDIR_URL }} kernel_root
         echo "[+] Cloning bazel rootdir"
+        git clone -q --depth=1 --single-branch -b ${{ inputs.ROOTDIR_BRANCH }} ${{ inputs.ROOTDIR_URL }} kernel_root
         cd kernel_root
-        echo "[+] cd kernel_root"
-        git clone -q --depth=1 --single-branch -b ${{ inputs.KERNEL_BRANCH }} ${{ inputs.KERNEL_URL }} kernel-6.6
-        echo "[+] Cloning common kernel tree"
+        bash setup_rootdir.sh
         cd -
         echo "[-] Done."
-      working-directory: rootdir
-
-    - name: Fetch toolchains
-      run: |
-        cd kernel_root
-        aria2c https://github.com/rsuntk/files/releases/download/a05m-tc/toolchains.tar.gz_00
-        aria2c https://github.com/rsuntk/files/releases/download/a05m-tc/toolchains.tar.gz_01
-        echo "INFO: Appending files and extracting ..."
-        cat toolchains.tar.gz_00 toolchains.tar.gz_01 > toolchains.tar.gz; tar -xf toolchains.tar.gz; rm toolchains.tar.gz toolchains.tar.gz_00 toolchains.tar.gz_01
       working-directory: rootdir
 
     - name: Prepare timezone fix
