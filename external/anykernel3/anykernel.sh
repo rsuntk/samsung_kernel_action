@@ -4,13 +4,13 @@
 ### AnyKernel setup
 # global properties
 properties() { '
-kernel.string=rsuntk kernel @ rsuntkOrgs
-do.devicecheck=0
+kernel.string=Evanescia Kernel for Galaxy A05 by RissuDesu
+do.devicecheck=1
 do.modules=0
 do.systemless=0
 do.cleanup=1
 do.cleanuponabort=0
-device.name1=
+device.name1=a05m
 device.name2=
 device.name3=
 device.name4=
