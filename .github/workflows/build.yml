@@ -55,7 +55,7 @@ jobs:
           max-size: 2G
 
     - name: Setup KernelSU
-      run: cd kernel_root/kernel-6.6; curl -LSs "https://raw.githubusercontent.com/tiann/KernelSU/main/kernel/setup.sh" | bash -s main
+      run: cd kernel_root/kernel/kernel-6.6; curl -LSs "https://raw.githubusercontent.com/tiann/KernelSU/main/kernel/setup.sh" | bash -s main
       working-directory: rootdir
 
     - name: Build kernel
@@ -69,7 +69,7 @@ jobs:
         # Start building
         bash build_kernel.sh
 
-        IMAGE_FILE="out/target/product/a05m/obj/KLEAF_OBJ/dist/kernel_device_modules-6.6/mgk_64_k66_kernel_aarch64.user/Image.gz"
+        IMAGE_FILE="kernel/out/target/product/a05m/obj/KLEAF_OBJ/dist/kernel_device_modules-6.6/mgk_64_k66_kernel_aarch64.user/Image.gz"
         
         if [ ! -f "$IMAGE_FILE" ]; then
           echo "::error::Kernel Image.gz not found!"
@@ -88,7 +88,7 @@ jobs:
 
     - name: List trees
       run: |
-        cd kernel_root/out/target/product/a05m/obj/KLEAF_OBJ/dist/kernel_device_modules-6.6/mgk_64_k66_kernel_aarch64.user/
+        cd kernel_root/kernel/out/target/product/a05m/obj/KLEAF_OBJ/dist/kernel_device_modules-6.6/mgk_64_k66_kernel_aarch64.user/
         ls -la
         find . -type f -name "Image.gz" || echo "Image.gz not found!"
       working-directory: rootdir
@@ -106,7 +106,7 @@ jobs:
       uses: actions/upload-artifact@v7
       with:
         name: Image_GZ-${{ steps.buildKernel.outputs.buildDetails }}
-        path: rootdir/kernel_root/out/target/product/a05m/obj/KLEAF_OBJ/dist/kernel_device_modules-6.6/mgk_64_k66_kernel_aarch64.user/Image.gz
+        path: rootdir/kernel_root/kernel/out/target/product/a05m/obj/KLEAF_OBJ/dist/kernel_device_modules-6.6/mgk_64_k66_kernel_aarch64.user/Image.gz
         compression-level: 9
 
     - name: Upload LKM
@@ -114,7 +114,7 @@ jobs:
       uses: actions/upload-artifact@v7
       with:
         name: LKM-${{ steps.buildKernel.outputs.buildDetails }}
-        path: rootdir/kernel_root/out/target/product/a05m/obj/KLEAF_OBJ/dist/kernel_device_modules-6.6/mgk_64_k66_kernel_aarch64.user/drivers/*
+        path: rootdir/kernel_root/kernel/out/target/product/a05m/obj/KLEAF_OBJ/dist/kernel_device_modules-6.6/mgk_64_k66_kernel_aarch64.user/drivers/*
         compression-level: 9
 
     - name: Upload to telegram
