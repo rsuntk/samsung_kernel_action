@@ -33,30 +33,16 @@ jobs:
 
     - name: Clone Kernel Source
       run: |
-        echo "[+] Cloning bazel rootdir"
         git clone -q --depth=1 --single-branch -b ${{ inputs.ROOTDIR_BRANCH }} ${{ inputs.ROOTDIR_URL }} kernel_root
         cd kernel_root
         bash setup_rootdir.sh
         cd -
-        echo "[-] Done."
       working-directory: rootdir
 
     - name: Prepare timezone fix
       run: |
         sudo rm /etc/localtime
         sudo ln -s /usr/share/zoneinfo/Asia/Jakarta /etc/localtime
-
-    - name: Setup Java
-      uses: actions/setup-java@v5
-      with:
-        distribution: temurin
-        java-version: 21
-
-    - name: Setup ccache
-      uses: hendrikmuhs/ccache-action@v1
-      with:
-          key: bazel-ccache
-          max-size: 2G
 
     - name: Setup KernelSU
       if: inputs.KERNELSU == true
