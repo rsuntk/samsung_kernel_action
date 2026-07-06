@@ -79,16 +79,10 @@ jobs:
 
     - name: Prepare for LKM
       run: |
-        cd kernel_root
+        cd kernel_root/out
         bash strip-all.sh
-        cd out/target/product/a05m/obj/KLEAF_OBJ/dist/kernel_device_modules-6.6
-
-        # step 1: remove vmlinux
-        rm mgk_64_k66_kernel_aarch64.user/vmlinux*
-        # step 2: remove dir inside
-        cd mgk_64_k66_kernel_aarch64.user;
-        find . -type d -exec rm -rf {} +
-        cd ..
+        cd target/product/a05m/obj/KLEAF_OBJ/dist/kernel_device_modules-6.6
+        rm mgk_64_k66_kernel_aarch64.user/vmlinux* -f
       working-directory: rootdir
 
     - name: Upload AnyKernel3
