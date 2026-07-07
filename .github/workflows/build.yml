@@ -79,9 +79,9 @@ jobs:
 
     - name: Prepare for LKM
       run: |
-        cd kernel_root/out
+        cd kernel_root
         bash strip-all.sh
-        cd target/product/a05m/obj/KLEAF_OBJ/dist/kernel_device_modules-6.6
+        cd out/target/product/a05m/obj/KLEAF_OBJ/dist/kernel_device_modules-6.6
         rm mgk_64_k66_kernel_aarch64.user/vmlinux* -f
       working-directory: rootdir
 
