@@ -24,7 +24,10 @@ jobs:
         path: rootdir
         show-progress: false
         fetch-depth: 1
-        
+
+    - name: Cleanup
+      uses: rokibhasansagar/slimhub_actions@main
+
     - name: Prepare dependencies
       run: |
         sudo apt update -y
