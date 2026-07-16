@@ -116,7 +116,7 @@ jobs:
       env:
         TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
         TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID_A05 }}
-      run: bash ../scripts/notifier.sh "${{ github.run_id }}" "success"
+      run: bash scripts/notifier.sh "${{ github.run_id }}" "success"
       working-directory: rootdir
     
     - name: Notify Failure
@@ -124,7 +124,7 @@ jobs:
       env:
         TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
         TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID_A05 }}
-      run: bash ../scripts/notifier.sh "${{ github.run_id }}" "failed"
+      run: bash scripts/notifier.sh "${{ github.run_id }}" "failed"
       working-directory: rootdir
     
     - name: Notify Canceled
@@ -132,5 +132,5 @@ jobs:
       env:
         TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
         TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID_A05 }}
-      run: bash ../scripts/notifier.sh "${{ github.run_id }}" "canceled"
+      run: bash scripts/notifier.sh "${{ github.run_id }}" "canceled"
       working-directory: rootdir
