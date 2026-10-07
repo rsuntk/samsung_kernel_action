@@ -73,6 +73,7 @@ jobs:
         export CC=/tmp/toolchains/clang/bin/clang-9
         export CROSS_COMPILE=/tmp/toolchains/aarch64-linux-android/bin/aarch64-linux-android-
         export CLANG_TRIPLE=/tmp/toolchains/aarch64-linux-gnu/bin/aarch64-linux-gnu-
+        export KCFLAGS=-w
 
         make -C $(pwd) O=out a10s_defconfig $KSU_DEFCONFIG
         make -C $(pwd) O=out -j$(nproc --all)
