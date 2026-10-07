@@ -26,6 +26,7 @@ jobs:
 
     - uses: actions/checkout@v5
       with:
+        path: rootdir
         fetch-depth: 1
 
     - name: Setup SSH Keys
@@ -36,6 +37,7 @@ jobs:
 
     - name: Clone kernel source
       run: git clone --depth=1 --single-branch -b ${{ inputs.BRANCH }} ${{ inputs.KERNEL_REPO }} kernel_root
+      working-directory: rootdir
 
     - name: Prepare Dependencies
       run: sudo apt update -y && sudo apt install -y aptitude bc bison ccache cpio curl flex git lz4 perl python-is-python3 tar wget libssl-dev
@@ -49,6 +51,7 @@ jobs:
 
         echo "buildDetails=$CODENAME-a10s-$(date +%Y%m%d)_$(echo $gitsha1)-NIGHTLY" >> $GITHUB_OUTPUT
         echo "currDate=$(date)" >> $GITHUB_OUTPUT
+      working-directory: rootdir
 
     - name: Fetch Toolchains
       run: |
@@ -75,7 +78,7 @@ jobs:
         export CLANG_TRIPLE=/tmp/toolchains/aarch64-linux-gnu/bin/aarch64-linux-gnu-
         export KCFLAGS=-w
 
-        make -C $(pwd) O=out a10s_defconfig $KSU_DEFCONFIG
+        make -C $(pwd) O=out a10s_defconfig $KSU_DEFCONFIG -j$(nproc --all)
         make -C $(pwd) O=out -j$(nproc --all)
 
         if [ -e out/arch/arm64/boot/Image.gz-dtb ]; then
@@ -84,19 +87,20 @@ jobs:
           echo "Build failed. Bailing out.."
           exit 1
         fi
+      working-directory: rootdir
 
     - name: Upload kernel artifacts
       uses: actions/upload-artifact@v5
       with:
         name: Kernel-${{ steps.buildKernel.outputs.buildDetails }}
         path: |
-          kernel_root/out/arch/arm64/boot/Image.gz-dtb
-          kernel_root/out/.config
+          rootdir/kernel_root/out/arch/arm64/boot/Image.gz-dtb
+          rootdir/kernel_root/out/.config
         retention-days: 5
 
     - name: Upload AnyKernel3 artifacts
       uses: actions/upload-artifact@v5
       with:
         name: AK3-${{ steps.buildKernel.outputs.buildDetails }}
-        path: kernel_root/external/anykernel3/*
+        path: rootdir/external/anykernel3/*
         retention-days: 5
