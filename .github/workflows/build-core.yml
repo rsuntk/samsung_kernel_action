@@ -1,0 +1,101 @@
+name: Workflow Core for Build Kernel
+on:
+  workflow_call:
+    inputs:
+      KERNEL_REPO:
+        description: 'Kernel URL repository'
+        type: string
+      BRANCH:
+        description: 'Kernel branch'
+        type: string
+      KSU:
+        description: 'Add KernelSU support'
+        default: 'NULL'
+        type: string
+      KSU_BRANCH:
+        description: 'KernelSU branch'
+        type: string
+        default: 'main'
+
+jobs:
+  build-kernel:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Set Timezone
+      run: sudo ln -sf /usr/share/zoneinfo/Asia/Jakarta /etc/localtime
+
+    - uses: actions/checkout@v5
+      with:
+        fetch-depth: 1
+
+    - name: Setup SSH Keys
+      if: ${{ startsWith(inputs.KERNEL_REPO, 'git@github.com') && inputs.UPDATE_TOOLCHAIN != 'true' }}
+      uses: webfactory/ssh-agent@v0.5.4
+      with:
+        ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+
+    - name: Clone kernel source
+      run: git clone --depth=1 --single-branch -b ${{ inputs.BRANCH }} ${{ inputs.KERNEL_REPO }} kernel_root
+
+    - name: Prepare Dependencies
+      run: sudo apt update -y && sudo apt install -y aptitude bc bison ccache cpio curl flex git lz4 perl python-is-python3 tar wget libssl-dev
+
+    - name: Setup Build Environment
+      id: buildKernel
+      run: |
+        cd kernel_root
+        gitsha1=$(git rev-parse --short HEAD)
+        CODENAME="Natie"
+
+        echo "buildDetails=$CODENAME-a10s-$(date +%Y%m%d)_$(echo $gitsha1)-NIGHTLY" >> $GITHUB_OUTPUT
+        echo "currDate=$(date)" >> $GITHUB_OUTPUT
+
+    - name: Fetch Toolchains
+      run: |
+        cd /tmp; mkdir toolchains; cd toolchains
+        git clone https://github.com/rsuplaygrnd/toolchains --depth=1 -b clang-9 clang
+        git clone https://github.com/rsuplaygrnd/toolchains --depth=1 -b androidcc-4.9 aarch64-linux-android
+        git clone https://github.com/rsuplaygrnd/toolchains --depth=1 -b gcc-6.4 aarch64-linux-gnu
+
+    - name: Build Kernel
+      run: |
+        cd kernel_root
+
+        # Handle KernelSU
+        if [[ "$KSU" != "NULL" ]]; then
+          curl -LSs "${{ inputs.KSU }}" | bash -s ${{ inputs.KSU_BRANCH }}
+          KSU_DEFCONFIG="ksu.config"
+        else
+          KSU_DEFCONFIG=
+        fi
+
+        export ARCH=arm64
+        export CC=/tmp/toolchains/clang/bin/clang-9
+        export CROSS_COMPILE=/tmp/toolchains/aarch64-linux-android/bin/aarch64-linux-android-
+        export CLANG_TRIPLE=/tmp/toolchains/aarch64-linux-gnu/bin/aarch64-linux-gnu-
+
+        make -C $(pwd) O=out a10s_defconfig $KSU_DEFCONFIG
+        make -C $(pwd) O=out -j$(nproc --all)
+
+        if [ -e out/arch/arm64/boot/Image.gz-dtb ]; then
+          mv out/arch/arm64/boot/Image.gz-dtb ../external/anykernel3
+        else
+          echo "Build failed. Bailing out.."
+          exit 1
+        fi
+
+    - name: Upload kernel artifacts
+      uses: actions/upload-artifact@v5
+      with:
+        name: Kernel-${{ steps.buildKernel.outputs.buildDetails }}
+        path: |
+          kernel_root/out/arch/arm64/boot/Image.gz-dtb
+          kernel_root/out/.config
+        retention-days: 5
+
+    - name: Upload AnyKernel3 artifacts
+      uses: actions/upload-artifact@v5
+      with:
+        name: AK3-${{ steps.buildKernel.outputs.buildDetails }}
+        path: kernel_root/external/anykernel3/*
+        retention-days: 5

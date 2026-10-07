@@ -1,0 +1,29 @@
+name: Build Kernel (KSU)
+on:
+  workflow_dispatch:
+    inputs:
+      KERNEL_REPO:
+        description: 'Kernel URL repository'
+        default: 'https://github.com/rsuntk/android_kernel_samsung_a10s-4.9.git'
+        required: true
+      BRANCH:
+        description: 'Kernel branch'
+        default: 'android-4.9-q'
+        required: true
+      KSU:
+        description: 'Add KernelSU support'
+        default: "https://raw.githubusercontent.com/backslashxx/KernelSU/master/kernel/setup.sh"
+      KSU_BRANCH:
+        description: 'KernelSU branch'
+        required: true
+        default: 'master'
+
+jobs:
+  build:
+    uses: ./.github/workflows/build-core.yml
+    secrets: inherit
+    with:
+      KERNEL_REPO: ${{ github.event.inputs.KERNEL_REPO }}
+      BRANCH: ${{ github.event.inputs.BRANCH }}
+      KSU: ${{ github.event.inputs.KSU }}
+      KSU_BRANCH: ${{ github.event.inputs.KSU_BRANCH }}
