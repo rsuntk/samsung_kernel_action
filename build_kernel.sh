@@ -21,7 +21,6 @@ export KBUILD_BUILD_USER="rsuntk"
 export KBUILD_BUILD_HOST="yukiprjkt-lab"
 export LLVM=1
 export LLVM_IAS=1
-export PATH="$HOME/neutron-clang/bin:$PATH"
 
 REGEN_DEFCONFIG=${REGEN_DEFCONFIG:-"1"}
 REGEN_SAVEDEFCONFIG=${REGEN_SAVEDEFCONFIG:-"0"}

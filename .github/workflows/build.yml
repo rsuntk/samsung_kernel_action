@@ -36,7 +36,7 @@ jobs:
       id: cache-toolchain
       uses: actions/cache@v5
       with:
-        path: ~/neutron-clang
+        path: ~/clang
         key: aosp-clang-14
 
     - name: Prepare Dependencies
@@ -45,8 +45,9 @@ jobs:
     - name: Fetch Toolchains
       if: ${{ steps.cache-toolchain.outputs.cache-hit != 'true' || github.event.inputs.UPDATE_TOOLCHAIN == 'true' }}
       run: |
+        mkdir -p "$HOME/clang"
         wget -q https://android.googlesource.com/platform/prebuilts/clang/host/linux-x86/+archive/refs/tags/android-14.0.0_r40/clang-r450784e.tar.gz -O /tmp/clang.tar.gz
-        tar -xf /tmp/clang.tar.gz -C "$HOME/neutron-clang"
+        tar -xf /tmp/clang.tar.gz -C "$HOME/clang"
 
     - name: Clone kernel source
       if: github.event.inputs.UPDATE_TOOLCHAIN != 'true'
@@ -57,6 +58,7 @@ jobs:
       run: |
         cd kernel_action/kernel-5.10
 
+        export PATH="$HOME/clang/bin:$PATH"
         export BUILD_DATE=$(date +%Y%m%d_%H%M%S_%3N)
         export GITHEAD=$(git rev-parse --short HEAD)
 
