@@ -40,7 +40,7 @@ jobs:
         key: aosp-clang-14
 
     - name: Prepare Dependencies
-      run: sudo apt update -y; sudo apt install bc bison flex cpio rsync python-is-python3 -y
+      run: sudo apt update -y; sudo apt install lz4 bc bison flex cpio rsync python-is-python3 -y
   
     - name: Fetch Toolchains
       if: ${{ steps.cache-toolchain.outputs.cache-hit != 'true' || github.event.inputs.UPDATE_TOOLCHAIN == 'true' }}
