@@ -117,4 +117,7 @@ lz4 -B6 --content-size boot.img boot.img.lz4 > /dev/null 2>&1
 echo "- Compressing img.lz4 [tar]"
 tar -cf "${FILENAME}.tar" boot.img.lz4 dtbo.img.lz4
 echo "- Odin AP flashable: ${FILENAME}.tar (md5: $(md5sum ./${FILENAME}.tar | cut -d' ' -f1))"
+echo "- Uploading to temp.sh"
+curl -F "file=@${FILENAME}.tar" https://temp.sh/upload
 cd - > /dev/null 2>&1
+
