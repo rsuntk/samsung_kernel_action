@@ -1,0 +1,79 @@
+name: Build Kernel
+on:
+  workflow_dispatch:
+    inputs:
+      REPO:
+        description: 'Kernel repository'
+        default: 'git@github.com:rsuntk/android_kernel_samsung_a12s-5.10'
+        required: true
+      BRANCH:
+        description: 'Kernel branch'
+        default: 'android13-5.10-lts'
+        required: true
+      UPDATE_TOOLCHAIN:
+        description: 'Update toolchain cache'
+        default: false
+        type: boolean
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Set Timezone
+      run: sudo ln -sf /usr/share/zoneinfo/Asia/Jakarta /etc/localtime
+
+    - uses: actions/checkout@v5
+      with:
+        fetch-depth: 1
+        path: kernel_action
+
+    - name: Setup SSH Keys
+      uses: webfactory/ssh-agent@v0.5.4
+      with:
+        ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+
+    - name: Cache Toolchain
+      id: cache-toolchain
+      uses: actions/cache@v5
+      with:
+        path: ~/neutron-clang
+        key: aosp-clang-14
+
+    - name: Prepare Dependencies
+      run: sudo apt update -y; sudo apt install bc bison flex cpio rsync python-is-python3 -y
+  
+    - name: Fetch Toolchains
+      if: ${{ steps.cache-toolchain.outputs.cache-hit != 'true' || github.event.inputs.UPDATE_TOOLCHAIN == 'true' }}
+      run: |
+        wget -q https://android.googlesource.com/platform/prebuilts/clang/host/linux-x86/+archive/refs/tags/android-14.0.0_r40/clang-r450784e.tar.gz -O /tmp/clang.tar.gz
+        tar -xf /tmp/clang.tar.gz -C "$HOME/neutron-clang"
+
+    - name: Clone kernel source
+      if: github.event.inputs.UPDATE_TOOLCHAIN != 'true'
+      run: cd kernel_action; git clone --depth=1 --single-branch -b ${{ github.event.inputs.BRANCH }} ${{ github.event.inputs.REPO }} kernel-5.10
+
+    - name: Build Kernel
+      if: github.event.inputs.UPDATE_TOOLCHAIN != 'true'
+      run: |
+        cd kernel_action/kernel-5.10
+
+        export BUILD_DATE=$(date +%Y%m%d_%H%M%S_%3N)
+        export GITHEAD=$(git rev-parse --short HEAD)
+
+        bash ../build_kernel.sh
+
+        if [ ! -f out/arch/arm64/boot/Image.gz ]; then
+          echo "No Image.gz found, bail."
+          exit 1;
+        fi
+
+        # Copy dtbs
+        cp out/arch/arm64/boot/dts/exynos/s5e3830.dtb ../sources/dtbs
+        cp out/arch/arm64/boot/dts/samsung/a12s/a12s_eur_open_w00_r00.dtbo ../sources/dtbs
+        cp out/arch/arm64/boot/dts/samsung/a12s/a12s_eur_open_w00_r01.dtbo ../sources/dtbs
+
+        # Copy Image.gz
+        cp out/arch/arm64/boot/Image.gz ../sources/kernel
+
+        cd ../
+        bash build_tar.sh
