@@ -75,7 +75,7 @@ jobs:
         cp out/arch/arm64/boot/dts/samsung/a12s/a12s_eur_open_w00_r01.dtbo ../sources/dtbs
 
         # Copy Image.gz
-        cp out/arch/arm64/boot/Image.gz ../sources/kernel
+        cp out/arch/arm64/boot/Image ../sources/kernel
 
         cd ../
         bash build_tar.sh

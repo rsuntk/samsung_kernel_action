@@ -42,7 +42,7 @@ OUT_RAMDISK="${OUT_DIR}/ramdisk.cpio"
 OUT_BOOTIMG="${OUT_DIR}/boot.img"
 OUT_DTBIMAGE="${OUT_DIR}/dtb.img"
 OUT_DTBOIMG="${OUT_DIR}/dtbo.img"
-OUT_KERNEL="${SOURCE_DIR}/kernel/Image.gz"
+OUT_KERNEL="${SOURCE_DIR}/kernel/Image"
 
 BOOT_PART_SIZE=46137344
 DTBO_PART_SIZE=8388608
