@@ -31,7 +31,7 @@ REGEN_DEFCONFIG=1
 fi
 
 if [[ "$REGEN_DEFCONFIG" == "1" ]]; then
-make -C $(pwd) O=out $TARGET_DEFCONFIG -j2
+make -C $(pwd) O=out $TARGET_DEFCONFIG permissive.config -j2
 fi
 
 if [[ "$REGEN_SAVEDEFCONFIG" == "1" ]]; then
