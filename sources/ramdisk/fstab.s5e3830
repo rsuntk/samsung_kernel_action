@@ -8,6 +8,11 @@ vendor	/vendor	ext4	ro,barrier=1	wait,avb,logical,first_stage_mount
 product	/product	ext4	ro,errors=panic	wait,avb,logical,first_stage_mount
 odm	/odm	ext4	ro,errors=panic	wait,avb,logical,first_stage_mount
 
+system	/system	erofs	ro,barrier=1	wait,avb=vbmeta,logical,first_stage_mount,avb_keys=/avb/q-gsi.avbpubkey:/avb/r-gsi.avbpubkey:/avb/s-gsi.avbpubkey
+vendor	/vendor	erofs	ro,barrier=1	wait,avb,logical,first_stage_mount
+product	/product	erofs	ro,errors=panic	wait,avb,logical,first_stage_mount
+odm	/odm	erofs	ro,errors=panic	wait,avb,logical,first_stage_mount
+
 /dev/block/by-name/prism	/prism	ext4	ro,barrier=1	nofail,avb,first_stage_mount
 /dev/block/by-name/optics	/optics	ext4	ro,barrier=1	nofail,avb,first_stage_mount
 /dev/block/by-name/metadata	/metadata	ext4	noatime,nosuid,nodev,noauto_da_alloc,discard,journal_checksum,data=ordered,errors=panic,sync	wait,first_stage_mount,formattable,check
