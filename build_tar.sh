@@ -61,6 +61,10 @@ second_stage_resources
 sys
 )
 
+# show image info
+echo "- Kernel banner:"
+strings "$OUT_KERNEL" | grep "Linux version"
+
 # copy files from ramdisk/ to out/ramdisk/
 cp -a "$RAMDISK_DIR/." "$OUT_RAMDISK_DIR/"
 for d in "${ramdisk_dirs[@]}"; do
