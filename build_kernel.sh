@@ -22,19 +22,44 @@ export KBUILD_BUILD_HOST="yukiprjkt-lab"
 export LLVM=1
 export LLVM_IAS=1
 
-REGEN_DEFCONFIG=${REGEN_DEFCONFIG:-"1"}
-REGEN_SAVEDEFCONFIG=${REGEN_SAVEDEFCONFIG:-"0"}
+REGEN_DEFCONFIG=${REGEN_DEFCONFIG:-"true"}
+REGEN_SAVEDEFCONFIG=${REGEN_SAVEDEFCONFIG:-"false"}
 TARGET_DEFCONFIG=${TARGET_DEFCONFIG:-"exynos850-a12snsxx_defconfig"}
+EMBED_KSU=${EMBED_KSU:-"false"}
+PERMISSIVE=${PERMISSIVE:-"true"} # temporary, allow GSI to boot, debug
 
-if [[ "$REGEN_SAVEDEFCONFIG" == "1" ]]; then
+# KSU info start
+KSU_REPO_OWNER=${KSU_REPO_OWNER:-"backslashxx"}
+KSU_REPO_BRANCH=${KSU_REPO_BRANCH:-"master"}
+KSU_REPO_NAME=${KSU_REPO_NAME:-"KernelSU"}
+KSU_TARGET_BRANCH=${KSU_TARGET_BRANCH:-"master"}
+
+if [[ "$EMBED_KSU" == "true" ]]; then
+echo "KernelSU embed: owner=$KSU_REPO_OWNER, repo_branch=$KSU_REPO_BRANCH, repo_name=$KSU_REPO_NAME, target_branch=$KSU_TARGET_BRANCH"
+curl -LSs "https://raw.githubusercontent.com/${KSU_REPO_OWNER}/${KSU_REPO_NAME}/${KSU_REPO_BRANCH}/kernel/setup.sh" | bash -s ${KSU_TARGET_BRANCH}
+KSU_CONFIG="ksu.config"
+else
+KSU_CONFIG=
+fi
+# KSU info end
+
+# Permissive section start
+if [[ "$PERMISSIVE" == "true" ]]; then
+PERMISSIVE_CONFIG="permissive.config"
+else
+PERMISSIVE_CONFIG=
+fi
+# Permissive section end
+
+if [[ "$REGEN_SAVEDEFCONFIG" == "true" ]]; then
 REGEN_DEFCONFIG=1
 fi
 
-if [[ "$REGEN_DEFCONFIG" == "1" ]]; then
-make -C $(pwd) O=out $TARGET_DEFCONFIG permissive.config -j2
+if [[ "$REGEN_DEFCONFIG" == "true" ]]; then
+make -C $(pwd) O=out $TARGET_DEFCONFIG $PERMISSIVE_CONFIG $KSU_CONFIG -j2
 fi
 
-if [[ "$REGEN_SAVEDEFCONFIG" == "1" ]]; then
+if [[ "$REGEN_SAVEDEFCONFIG" == "true" ]]; then
 make -C $(pwd) O=out savedefconfig -j2
 mv out/defconfig arch/arm64/configs/$TARGET_DEFCONFIG
 rm -rf out

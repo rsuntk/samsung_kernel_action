@@ -10,6 +10,14 @@ on:
         description: 'Kernel branch'
         default: 'android13-5.10-lts'
         required: true
+      EMBED_KSU:
+        description: 'Embed KernelSU'
+        default: false
+        type: boolean
+      PERMISSIVE:
+        description: 'Build kernel as Permissive'
+        default: true
+        type: boolean
       UPDATE_TOOLCHAIN:
         description: 'Update toolchain cache'
         default: false
@@ -62,7 +70,7 @@ jobs:
         export BUILD_DATE=$(date +%Y%m%d_%H%M%S_%3N)
         export GITHEAD=$(git rev-parse --short HEAD)
 
-        bash ../build_kernel.sh
+        EMBED_KSU="${{ github.event.inputs.EMBED_KSU }}" PERMISSIVE="${{ github.event.inputs.PERMISSIVE }}" bash ../build_kernel.sh
 
         if [ ! -f out/arch/arm64/boot/Image.gz ]; then
           echo "No Image.gz found, bail."
