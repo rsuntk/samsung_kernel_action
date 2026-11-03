@@ -51,6 +51,20 @@ AVBTOOL="${SCRIPTS_DIR}/avbtool"
 MKBOOTIMG="${SCRIPTS_DIR}/mkbootimg/mkbootimg.py"
 MKDTBOIMG="${SCRIPTS_DIR}/mkdtboimg.py"
 
+# validate
+missing=0
+for f in "${OUT_KERNEL}" "${IN_DTB}" "${IN_DTBO_00}" "${IN_DTBO_01}"; do
+    if [ ! -f "$f" ]; then
+        echo "- Missing: $f"
+        missing=1
+    fi
+done
+
+if [ "$missing" -ne 0 ]; then
+    echo "- No Image, DTB, DTBO detected, bail."
+    exit 1
+fi
+
 ramdisk_dirs=(
 debug_ramdisk
 dev
@@ -121,7 +135,11 @@ lz4 -B6 --content-size boot.img boot.img.lz4 > /dev/null 2>&1
 echo "- Compressing img.lz4 [tar]"
 tar -cf "${FILENAME}.tar" boot.img.lz4 dtbo.img.lz4
 echo "- Odin AP flashable: ${FILENAME}.tar (md5: $(md5sum ./${FILENAME}.tar | cut -d' ' -f1))"
-echo "- Uploading to temp.sh"
-curl -F "file=@${FILENAME}.tar" https://temp.sh/upload
+if [[ ! -z "${TG_BOT_TOKEN:-}" || ! -z "${TG_CHAT_ID:-}" ]]; then
+source ${SCRIPTS_DIR}/telegram.sh
+upload_tg "${FILENAME}.tar" "${TG_BOT_TOKEN}" "${TG_CHAT_ID}"
+else
+echo "- Warning, your file is not uploaded."
+fi
 cd - > /dev/null 2>&1
 

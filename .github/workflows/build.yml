@@ -69,6 +69,8 @@ jobs:
         export PATH="$HOME/clang/bin:$PATH"
         export BUILD_DATE=$(date +%Y%m%d_%H%M%S_%3N)
         export GITHEAD=$(git rev-parse --short HEAD)
+        export TG_BOT_TOKEN="${{ secrets.BOT_TOKEN }}"
+        export TG_CHAT_ID="${{ secrets.CHAT_ID }}"
 
         EMBED_KSU="${{ github.event.inputs.EMBED_KSU }}" PERMISSIVE="${{ github.event.inputs.PERMISSIVE }}" bash ../build_kernel.sh
 
