@@ -4,11 +4,11 @@ on:
     inputs:
       REPO:
         description: 'Kernel repository'
-        default: 'git@github.com:rsuntk/android_kernel_samsung_a12s-5.10'
+        default: 'git@github.com:XhakaTK/PegasusKernel_Exynos3830.git'
         required: true
       BRANCH:
         description: 'Kernel branch'
-        default: 'android13-5.10-lts'
+        default: 'A12s-LTS'
         required: true
       EMBED_KSU:
         description: 'Embed KernelSU'
