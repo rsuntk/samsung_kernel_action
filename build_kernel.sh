@@ -24,7 +24,7 @@ export LLVM_IAS=1
 
 REGEN_DEFCONFIG=${REGEN_DEFCONFIG:-"true"}
 REGEN_SAVEDEFCONFIG=${REGEN_SAVEDEFCONFIG:-"false"}
-TARGET_DEFCONFIG=${TARGET_DEFCONFIG:-"exynos850-a12snsxx_defconfig"}
+TARGET_DEFCONFIG=${TARGET_DEFCONFIG:-"exynos850-a12s_defconfig"}
 EMBED_KSU=${EMBED_KSU:-"false"}
 PERMISSIVE=${PERMISSIVE:-"true"} # temporary, allow GSI to boot, debug
 
@@ -54,6 +54,10 @@ fi
 if [[ "$REGEN_SAVEDEFCONFIG" == "true" ]]; then
 REGEN_DEFCONFIG=1
 fi
+
+# The kernel tree ships committed kbuild output (arch/arm64/include/generated),
+# which trips the out-of-tree guard in the top-level Makefile's outputmakefile.
+make -C $(pwd) O=out mrproper
 
 if [[ "$REGEN_DEFCONFIG" == "true" ]]; then
 make -C $(pwd) O=out $TARGET_DEFCONFIG $PERMISSIVE_CONFIG $KSU_CONFIG -j2

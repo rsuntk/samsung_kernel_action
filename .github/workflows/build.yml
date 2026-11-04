@@ -4,11 +4,11 @@ on:
     inputs:
       REPO:
         description: 'Kernel repository'
-        default: 'git@github.com:rsuntk/android_kernel_samsung_a12s-5.10'
+        default: 'https://github.com/XhakaTK/PegasusKernel_Exynos3830.git'
         required: true
       BRANCH:
         description: 'Kernel branch'
-        default: 'android13-5.10-lts'
+        default: 'A12s-LTS'
         required: true
       EMBED_KSU:
         description: 'Embed KernelSU'
@@ -34,11 +34,6 @@ jobs:
       with:
         fetch-depth: 1
         path: kernel_action
-
-    - name: Setup SSH Keys
-      uses: webfactory/ssh-agent@v0.5.4
-      with:
-        ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
 
     - name: Cache Toolchain
       id: cache-toolchain
