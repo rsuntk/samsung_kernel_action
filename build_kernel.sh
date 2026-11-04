@@ -55,6 +55,10 @@ if [[ "$REGEN_SAVEDEFCONFIG" == "true" ]]; then
 REGEN_DEFCONFIG=1
 fi
 
+# The kernel tree ships committed kbuild output (arch/arm64/include/generated),
+# which trips the out-of-tree guard in the top-level Makefile's outputmakefile.
+make -C $(pwd) O=out mrproper
+
 if [[ "$REGEN_DEFCONFIG" == "true" ]]; then
 make -C $(pwd) O=out $TARGET_DEFCONFIG $PERMISSIVE_CONFIG $KSU_CONFIG -j2
 fi
