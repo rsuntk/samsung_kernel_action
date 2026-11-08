@@ -16,7 +16,6 @@
 
 export ARCH=arm64
 export DTC_FLAGS="-@"
-export KCFLAGS=-w # temporary, ignore all warnings
 export KBUILD_BUILD_USER="rsuntk"
 export KBUILD_BUILD_HOST="yukiprjkt-lab"
 export LLVM=1
