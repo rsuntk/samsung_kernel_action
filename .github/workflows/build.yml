@@ -45,7 +45,7 @@ jobs:
       uses: actions/cache@v5
       with:
         path: ~/clang
-        key: aosp-clang-14
+        key: aosp-clang-23
 
     - name: Prepare Dependencies
       run: sudo apt update -y; sudo apt install lz4 bc bison flex cpio rsync python-is-python3 -y
@@ -54,7 +54,7 @@ jobs:
       if: ${{ steps.cache-toolchain.outputs.cache-hit != 'true' || github.event.inputs.UPDATE_TOOLCHAIN == 'true' }}
       run: |
         mkdir -p "$HOME/clang"
-        wget -q https://android.googlesource.com/platform/prebuilts/clang/host/linux-x86/+archive/refs/tags/android-14.0.0_r40/clang-r450784e.tar.gz -O /tmp/clang.tar.gz
+        wget -q https://android.googlesource.com/platform/prebuilts/clang/host/linux-x86/+archive/16fae8ef5b856b1d3e02a55274e4327c5842bb34/clang-r614150.tar.gz -O /tmp/clang.tar.gz
         tar -xf /tmp/clang.tar.gz -C "$HOME/clang"
 
     - name: Clone kernel source
