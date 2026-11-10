@@ -16,7 +16,7 @@ on:
         type: boolean
       PERMISSIVE:
         description: 'Build kernel as Permissive'
-        default: true
+        default: false
         type: boolean
       UPDATE_TOOLCHAIN:
         description: 'Update toolchain cache'

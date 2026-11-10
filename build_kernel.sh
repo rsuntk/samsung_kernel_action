@@ -25,7 +25,7 @@ REGEN_DEFCONFIG=${REGEN_DEFCONFIG:-"true"}
 REGEN_SAVEDEFCONFIG=${REGEN_SAVEDEFCONFIG:-"false"}
 TARGET_DEFCONFIG=${TARGET_DEFCONFIG:-"exynos850-a12snsxx_defconfig"}
 EMBED_KSU=${EMBED_KSU:-"false"}
-PERMISSIVE=${PERMISSIVE:-"true"} # temporary, allow GSI to boot, debug
+PERMISSIVE=${PERMISSIVE:-"false"}
 
 # KSU info start
 KSU_REPO_OWNER=${KSU_REPO_OWNER:-"backslashxx"}
